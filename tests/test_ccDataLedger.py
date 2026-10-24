@@ -4,7 +4,8 @@ from app import create_app
 
 
 def _import(client, samples_dir):
-    return client.post("/ccDataLedger/import", data={"path": str(samples_dir)})
+    files = [(f.open("rb"), f.name) for f in sorted(samples_dir.glob("*.json"))]
+    return client.post("/ccDataLedger/import", data={"file": files}, content_type="multipart/form-data")
 
 
 def test_import_dir_and_view(client, samples_dir):
