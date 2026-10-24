@@ -4,22 +4,13 @@ from pathlib import Path
 
 
 def validate_import_inputs(merged: dict) -> tuple[bool, list[str]]:
-    """Expect an uploaded ``files`` list (.json) and/or a server-side ``path`` (file or directory)."""
-    errors: list[str] = []
+    """Expect an uploaded ``files`` list of .json files."""
     uploads = merged.get("files") or []
-    path = str(merged.get("path", "")).strip()
-
-    if not uploads and not path:
-        errors.append("Provide 'file' (uploaded .json, repeatable) or 'path' (JSON file or directory).")
+    if not uploads:
+        return False, ["'file' is required (uploaded .json, repeatable)."]
     if any(not getattr(u, "filename", "") or Path(u.filename).suffix.lower() != ".json" for u in uploads):
-        errors.append("Uploaded files must be .json.")
-    if path:
-        p = Path(path)
-        if ".." in p.parts:
-            errors.append("'path' must not contain '..'.")
-        elif not p.exists():
-            errors.append(f"'path' does not exist: {path}")
-    return (not errors, errors)
+        return False, ["Uploaded files must be .json."]
+    return True, []
 
 
 def validate_update_body(body, allowed: set[str]) -> tuple[bool, list[str]]:
