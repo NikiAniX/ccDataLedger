@@ -75,10 +75,9 @@ Responses are JSON with `status` (`success` / `error` / `partial`) and `logs` (e
 
 | Field | Description |
 |---|---|
-| `file` | uploaded `.json`, repeatable |
-| `path` | server-side JSON file or directory (all `*.json`; no `..`) |
+| `file` | uploaded `.json` (required), repeatable |
 
-At least one is required. Returns `statement_ids` and per-file `logs`. A bad file doesn't stop the others (`partial`).
+Returns `statement_ids` and per-file `logs`. A bad file doesn't stop the others (`partial`).
 
 ### View and update
 
@@ -92,7 +91,7 @@ At least one is required. Returns `statement_ids` and per-file `logs`. A bad fil
 | DELETE | `/summary/<id>`, `/transactions/<id>`, `/additional_details/<id>` | remove a child row |
 
 ```bash
-curl -X POST -F path=/Users/ani/projectX/ecosystem/target/ccDataExtractor/output http://localhost:5008/ccDataLedger/import
+curl -X POST -F file=@a.json -F file=@b.json http://localhost:5008/ccDataLedger/import
 curl -X POST -F file=@statement.json http://localhost:5008/ccDataLedger/import
 curl 'http://localhost:5008/ccDataLedger/statements'
 curl 'http://localhost:5008/ccDataLedger/transactions?statement_id=1&amount_type=Dr'
