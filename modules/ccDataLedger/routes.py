@@ -5,7 +5,6 @@ Thin Flask routes — validation → service delegate → JSON response.
 
 import json
 import sqlite3
-from pathlib import Path
 
 from flask import Blueprint, current_app, jsonify, request
 
@@ -28,18 +27,13 @@ def _err(msgs, code):
 
 @ccDataLedger_bp.route("/import", methods=["POST"])
 def import_json():
-    """POST /ccDataLedger/import — multipart ``file`` (repeatable .json) and/or form ``path`` (file or dir)."""
-    data = {**request.form.to_dict(flat=True), "files": request.files.getlist("file")}
+    """POST /ccDataLedger/import — multipart ``file`` (repeatable .json)."""
+    data = {"files": request.files.getlist("file")}
     ok, messages = validate_import_inputs(data)
     if not ok:
         return _err(messages, 400)
 
-    docs: list[tuple[str, object]] = [(u.filename, u.read()) for u in data["files"]]
-    path = data.get("path", "").strip()
-    if path:
-        p = Path(path)
-        for f in sorted(p.glob("*.json")) if p.is_dir() else [p]:
-            docs.append((f.name, f.read_bytes()))
+    docs = [(u.filename, u.read()) for u in data["files"]]
 
     conn, logs, ids, failed = _conn(), [], [], 0
     try:
