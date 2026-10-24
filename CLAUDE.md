@@ -37,7 +37,6 @@ Import (`import_statement`) runs in one transaction, keyed by `source_file` (fal
 - Adding a column to `SCHEMA` does not migrate an existing DB file (`CREATE TABLE IF NOT EXISTS`); an `ALTER TABLE` or a fresh dev DB is needed. Update the README table and mapping too.
 - Update routes accept only existing columns minus `id`, `statement_id`, `imported_at` (`READONLY` is defined in both `routes.py` and `crud_service.py`). Create routes require `statement_id`; FK/UNIQUE violations surface as `sqlite3.Error` → 400.
 - `list_rows` silently ignores filter params that are not columns, and `limit`/`offset` are cast with `int()` (non-numeric values currently cause a 500).
-- Import `path` accepts absolute paths (only `..` is blocked), same looseness as ccDataExtractor's `output_dir`; it reads any `*.json` the server can read.
 - `bool` values in JSON (`emi`) are stored as 0/1 in `transactions`, as `"true"/"false"` in `additional_details`.
 - The test suite skips/depends on sample files at `../target/ccDataExtractor/output`; most tests would fail without them (`test_import_dir_and_view` skips, others assume data).
 
