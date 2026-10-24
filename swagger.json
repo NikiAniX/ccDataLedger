@@ -18,7 +18,7 @@
         ],
         "summary": "Import statement JSON file(s) into the four tables",
         "operationId": "importJson",
-        "description": "Provide uploaded `file`(s) and/or a server `path`. Re-importing the same `source_file` replaces that statement and its children.",
+        "description": "Upload one or more statement JSON files as repeated `file` fields. Re-importing the same `source_file` replaces that statement and its children.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1246,12 +1246,11 @@
               "format": "binary"
             },
             "description": "Uploaded .json file(s); repeat the field"
-          },
-          "path": {
-            "type": "string",
-            "description": "Server-side JSON file or directory of *.json (no '..')"
           }
-        }
+        },
+        "required": [
+          "file"
+        ]
       },
       "Statement": {
         "type": "object",
