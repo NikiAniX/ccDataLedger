@@ -1,0 +1,9 @@
+{
+  "blueprints": [
+    {
+      "path": "modules/ccDataLedger",
+      "name": "ccDataLedger_bp",
+      "url_prefix": "/ccDataLedger"
+    }
+  ]
+}
