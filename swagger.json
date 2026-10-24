@@ -1,0 +1,1856 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ccDataLedger API",
+    "version": "1.0.0",
+    "description": "Import credit-card statement JSON (ccDataExtractor output) into a file-based SQLite DB and view/update it. Amounts and dates are stored as the text found in the JSON."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/ccDataLedger/import": {
+      "post": {
+        "tags": [
+          "Import"
+        ],
+        "summary": "Import statement JSON file(s) into the four tables",
+        "operationId": "importJson",
+        "description": "Provide uploaded `file`(s) and/or a server `path`. Re-importing the same `source_file` replaces that statement and its children.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "At least one statement imported (`success` or `partial`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or nothing imported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/statements": {
+      "get": {
+        "tags": [
+          "statements"
+        ],
+        "summary": "List statements",
+        "operationId": "list_statements",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "source_file",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact-match column filter"
+          },
+          {
+            "name": "cardholder",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact-match column filter"
+          }
+        ],
+        "description": "Any other column name is also accepted as an exact-match filter.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/statements/{row_id}": {
+      "get": {
+        "tags": [
+          "statements"
+        ],
+        "summary": "Get one row of statements",
+        "operationId": "get_statements",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementOne"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "statements"
+        ],
+        "summary": "Update statements row (partial)",
+        "operationId": "put_statements",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "statements"
+        ],
+        "summary": "Update statements row (partial)",
+        "operationId": "patch_statements",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatementUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "statements"
+        ],
+        "summary": "Delete statements row (cascades to children)",
+        "operationId": "delete_statements",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "status": "success"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/summary": {
+      "get": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "List summary",
+        "operationId": "list_summary",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "statement_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Exact-match column filter"
+          }
+        ],
+        "description": "Any other column name is also accepted as an exact-match filter.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Create summary row",
+        "operationId": "create_summary",
+        "description": "`statement_id` must reference an existing statement. `summary` allows one row per statement.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummaryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or FK/UNIQUE violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/summary/{row_id}": {
+      "get": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Get one row of summary",
+        "operationId": "get_summary",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOne"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Update summary row (partial)",
+        "operationId": "put_summary",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummaryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Update summary row (partial)",
+        "operationId": "patch_summary",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummaryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Delete summary row",
+        "operationId": "delete_summary",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "status": "success"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/transactions": {
+      "get": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "List transactions",
+        "operationId": "list_transactions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "statement_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Exact-match column filter"
+          },
+          {
+            "name": "amount_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact-match column filter"
+          }
+        ],
+        "description": "Any other column name is also accepted as an exact-match filter.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Create transactions row",
+        "operationId": "create_transactions",
+        "description": "`statement_id` must reference an existing statement.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or FK/UNIQUE violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/transactions/{row_id}": {
+      "get": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Get one row of transactions",
+        "operationId": "get_transactions",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOne"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Update transactions row (partial)",
+        "operationId": "put_transactions",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Update transactions row (partial)",
+        "operationId": "patch_transactions",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Delete transactions row",
+        "operationId": "delete_transactions",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "status": "success"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/additional_details": {
+      "get": {
+        "tags": [
+          "additional_details"
+        ],
+        "summary": "List additional_details",
+        "operationId": "list_additional_details",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "statement_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Exact-match column filter"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact-match column filter"
+          }
+        ],
+        "description": "Any other column name is also accepted as an exact-match filter.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdditionalDetailList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "additional_details"
+        ],
+        "summary": "Create additional_details row",
+        "operationId": "create_additional_details",
+        "description": "`statement_id` must reference an existing statement.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdditionalDetailCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdditionalDetailOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or FK/UNIQUE violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ccDataLedger/additional_details/{row_id}": {
+      "get": {
+        "tags": [
+          "additional_details"
+        ],
+        "summary": "Get one row of additional_details",
+        "operationId": "get_additional_details",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdditionalDetailOne"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "additional_details"
+        ],
+        "summary": "Update additional_details row (partial)",
+        "operationId": "put_additional_details",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdditionalDetailUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdditionalDetailOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "additional_details"
+        ],
+        "summary": "Update additional_details row (partial)",
+        "operationId": "patch_additional_details",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdditionalDetailUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdditionalDetailOne"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty body, unknown/read-only field or DB constraint error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "additional_details"
+        ],
+        "summary": "Delete additional_details row",
+        "operationId": "delete_additional_details",
+        "parameters": [
+          {
+            "name": "row_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "status": "success"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "logs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ImportResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "partial",
+              "error"
+            ]
+          },
+          "logs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "statement_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "ImportRequest": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "binary"
+            },
+            "description": "Uploaded .json file(s); repeat the field"
+          },
+          "path": {
+            "type": "string",
+            "description": "Server-side JSON file or directory of *.json (no '..')"
+          }
+        }
+      },
+      "Statement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "source_file": {
+            "type": "string"
+          },
+          "source_files": {
+            "type": "string",
+            "description": "JSON array of original file names, stored as text"
+          },
+          "cardholder": {
+            "type": "string"
+          },
+          "imported_at": {
+            "type": "string"
+          }
+        }
+      },
+      "StatementUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "source_file": {
+            "type": "string"
+          },
+          "source_files": {
+            "type": "string",
+            "description": "JSON array of original file names, stored as text"
+          },
+          "cardholder": {
+            "type": "string"
+          }
+        }
+      },
+      "StatementCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_file": {
+            "type": "string"
+          },
+          "source_files": {
+            "type": "string",
+            "description": "JSON array of original file names, stored as text"
+          },
+          "cardholder": {
+            "type": "string"
+          }
+        }
+      },
+      "StatementList": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Statement"
+            }
+          }
+        }
+      },
+      "StatementOne": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Statement"
+          }
+        }
+      },
+      "Summary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "statement_id": {
+            "type": "integer"
+          },
+          "total_payment_due": {
+            "type": "string"
+          },
+          "minimum_payment_due": {
+            "type": "string"
+          },
+          "statement_period": {
+            "type": "string"
+          },
+          "payment_due_date": {
+            "type": "string"
+          },
+          "statement_generation_date": {
+            "type": "string"
+          },
+          "credit_card_number": {
+            "type": "string"
+          },
+          "credit_limit": {
+            "type": "string"
+          },
+          "available_credit_limit": {
+            "type": "string"
+          },
+          "available_cash_limit": {
+            "type": "string"
+          },
+          "previous_statement_dues": {
+            "type": "string"
+          },
+          "payments_credits": {
+            "type": "string"
+          },
+          "purchases_debit": {
+            "type": "string"
+          },
+          "finance_charges": {
+            "type": "string"
+          },
+          "cash_advance": {
+            "type": "string"
+          },
+          "surcharge": {
+            "type": "string"
+          },
+          "previous_balance": {
+            "type": "string"
+          },
+          "payments": {
+            "type": "string"
+          },
+          "credits": {
+            "type": "string"
+          },
+          "purchases": {
+            "type": "string"
+          },
+          "other_debits_charges": {
+            "type": "string"
+          },
+          "total_payment_due_check": {
+            "type": "string"
+          }
+        }
+      },
+      "SummaryUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "total_payment_due": {
+            "type": "string"
+          },
+          "minimum_payment_due": {
+            "type": "string"
+          },
+          "statement_period": {
+            "type": "string"
+          },
+          "payment_due_date": {
+            "type": "string"
+          },
+          "statement_generation_date": {
+            "type": "string"
+          },
+          "credit_card_number": {
+            "type": "string"
+          },
+          "credit_limit": {
+            "type": "string"
+          },
+          "available_credit_limit": {
+            "type": "string"
+          },
+          "available_cash_limit": {
+            "type": "string"
+          },
+          "previous_statement_dues": {
+            "type": "string"
+          },
+          "payments_credits": {
+            "type": "string"
+          },
+          "purchases_debit": {
+            "type": "string"
+          },
+          "finance_charges": {
+            "type": "string"
+          },
+          "cash_advance": {
+            "type": "string"
+          },
+          "surcharge": {
+            "type": "string"
+          },
+          "previous_balance": {
+            "type": "string"
+          },
+          "payments": {
+            "type": "string"
+          },
+          "credits": {
+            "type": "string"
+          },
+          "purchases": {
+            "type": "string"
+          },
+          "other_debits_charges": {
+            "type": "string"
+          },
+          "total_payment_due_check": {
+            "type": "string"
+          }
+        }
+      },
+      "SummaryCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "statement_id": {
+            "type": "integer"
+          },
+          "total_payment_due": {
+            "type": "string"
+          },
+          "minimum_payment_due": {
+            "type": "string"
+          },
+          "statement_period": {
+            "type": "string"
+          },
+          "payment_due_date": {
+            "type": "string"
+          },
+          "statement_generation_date": {
+            "type": "string"
+          },
+          "credit_card_number": {
+            "type": "string"
+          },
+          "credit_limit": {
+            "type": "string"
+          },
+          "available_credit_limit": {
+            "type": "string"
+          },
+          "available_cash_limit": {
+            "type": "string"
+          },
+          "previous_statement_dues": {
+            "type": "string"
+          },
+          "payments_credits": {
+            "type": "string"
+          },
+          "purchases_debit": {
+            "type": "string"
+          },
+          "finance_charges": {
+            "type": "string"
+          },
+          "cash_advance": {
+            "type": "string"
+          },
+          "surcharge": {
+            "type": "string"
+          },
+          "previous_balance": {
+            "type": "string"
+          },
+          "payments": {
+            "type": "string"
+          },
+          "credits": {
+            "type": "string"
+          },
+          "purchases": {
+            "type": "string"
+          },
+          "other_debits_charges": {
+            "type": "string"
+          },
+          "total_payment_due_check": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "statement_id"
+        ]
+      },
+      "SummaryList": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Summary"
+            }
+          }
+        }
+      },
+      "SummaryOne": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Summary"
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "statement_id": {
+            "type": "integer"
+          },
+          "date": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "emi": {
+            "type": "integer"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "amount_type": {
+            "type": "string"
+          },
+          "min_confidence": {
+            "type": "number"
+          },
+          "merchant_category": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "reward_points": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "cashback": {
+            "type": "string"
+          },
+          "cashback_type": {
+            "type": "string"
+          },
+          "card_no": {
+            "type": "string"
+          }
+        }
+      },
+      "TransactionUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "emi": {
+            "type": "integer"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "amount_type": {
+            "type": "string"
+          },
+          "min_confidence": {
+            "type": "number"
+          },
+          "merchant_category": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "reward_points": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "cashback": {
+            "type": "string"
+          },
+          "cashback_type": {
+            "type": "string"
+          },
+          "card_no": {
+            "type": "string"
+          }
+        }
+      },
+      "TransactionCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "statement_id": {
+            "type": "integer"
+          },
+          "date": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "emi": {
+            "type": "integer"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "amount_type": {
+            "type": "string"
+          },
+          "min_confidence": {
+            "type": "number"
+          },
+          "merchant_category": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "reward_points": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "cashback": {
+            "type": "string"
+          },
+          "cashback_type": {
+            "type": "string"
+          },
+          "card_no": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "statement_id"
+        ]
+      },
+      "TransactionList": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          }
+        }
+      },
+      "TransactionOne": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Transaction"
+          }
+        }
+      },
+      "AdditionalDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "statement_id": {
+            "type": "integer"
+          },
+          "category": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "AdditionalDetailUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "AdditionalDetailCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "statement_id": {
+            "type": "integer"
+          },
+          "category": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "statement_id"
+        ]
+      },
+      "AdditionalDetailList": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdditionalDetail"
+            }
+          }
+        }
+      },
+      "AdditionalDetailOne": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdditionalDetail"
+          }
+        }
+      }
+    }
+  }
+}
